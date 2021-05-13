@@ -12,7 +12,7 @@
 
 
 // structure pour un neurone
-struct neurone_s
+typedef struct neurone_s
 {
     double poids;
     double biais;
@@ -21,25 +21,20 @@ struct neurone_s
     double output;
     struct neurone_s** entrees;
     struct neurone_s** sorties;
-};
-
-typedef struct neurone_s neurone_t;
+}neurone_t;
 
 // structure pour un layer
-struct layer_s
+typedef struct layer_s
 {
     neurone_t* neurone;
-};
-
-typedef struct layer_s layer_t;
+}layer_t;
 
 // structure pour le reseau
-struct reseau_s
+typedef struct reseau_s
 {
     layer_t* couche;
-};
+}reseau_t;
 
-typedef struct reseau_s reseau_t;
 
 // fonction d'initialisation du réseau
 void init(reseau_t* r);
