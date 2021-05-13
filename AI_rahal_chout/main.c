@@ -14,7 +14,13 @@
 // structure pour un neurone
 struct neurone_s
 {
-
+    double poids;
+    double biais;
+    int nb_entree;
+    int nb_sortie;
+    double output;
+    struct neurone_s** entrees;
+    struct neurone_s** sorties;
 };
 
 typedef struct neurone_s neurone_t;
@@ -22,7 +28,7 @@ typedef struct neurone_s neurone_t;
 // structure pour un layer
 struct layer_s
 {
-
+    neurone_t* neurone;
 };
 
 typedef struct layer_s layer_t;
@@ -30,7 +36,7 @@ typedef struct layer_s layer_t;
 // structure pour le reseau
 struct reseau_s
 {
-
+    layer_t* couche;
 };
 
 typedef struct reseau_s reseau_t;
@@ -51,12 +57,15 @@ double sigmoide(double output)
 // fonction nombre aleatoire
 double aleat(int a, int b)
 {
-    return (double)rand() / ((double)RAND_MAX / a);
+    return (double)((rand()/(double)RAND_MAX)*(b-a) + a);
 }
 
-int main(int argc, char** argv)
+int main(void)
 {
-
-
+    // test de la fonction aleat
+    while (fgetc(stdin) != '0')
+    {
+        printf("%f\n",aleat(-100, 100));
+    }
     return EXIT_SUCCESS;
 }
