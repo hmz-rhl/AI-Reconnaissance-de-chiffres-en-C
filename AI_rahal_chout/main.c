@@ -51,7 +51,25 @@ typedef struct reseau_s
 }reseau_t;
 
 
-// fonction d'initialisation du réseau
+typedef struct subdata_s
+{
+  int number_expected;   
+  unsigned char* pixel;
+}subdata_t;
+
+typedef struct dataset_s
+{
+  int nb_images;
+  int rows;
+  int cols;
+  int size;
+
+  subdata_t* data;
+}dataset_t;
+
+
+
+// fonction d'initialisation du réseau      
 void init(reseau_t* r);
 
 // fonction loss
@@ -115,33 +133,39 @@ void saveBMP(unsigned char data[], int rows, int cols, const char* filename)
   }
 }
 
-void extractDataImg(const char* filename)
+dataset_t extractDataImg(const char* filename)
 {
+  dataset_t ds;
   FILE* file;
   char chaine[READ_MAX] = "";
-  unsigned char data[784] = { 0 };
-  int i, j, nb_images, rows, cols, number_expected, nb_zeros;
+  int i, j, nb_zeros;
+  int k = 0;
   unsigned char pixel;
   file = fopen(filename, "r");
+
   if (file == NULL)
     printf("Error: could not open file '%s' !\n", filename);
   else
   {
     fgets(chaine, READ_MAX, file);
     char* extracted = strtok(chaine, ";");
-    nb_images = atoi(extracted);
+    ds.nb_images = atoi(extracted);
 
     extracted = strtok(NULL, ";");
-    rows = atoi(extracted);
+    ds.rows = atoi(extracted);
 
     extracted = strtok(NULL, ";");
-    cols = atoi(extracted);
+    ds.cols = atoi(extracted);
+
+    ds.size = ds.rows * ds.cols;
+    ds.data = calloc(ds.nb_images, sizeof(subdata_t));
 
     while (fgets(chaine, READ_MAX, file) != NULL) 
     {
+      ds.data[k].pixel = calloc(ds.size, sizeof(unsigned char));
       i = 0;
       char* extracted2 = strtok(chaine, ";");
-      number_expected = atoi(extracted);
+      ds.data[k].number_expected = atoi(extracted);
       extracted2 = strtok(NULL, ";");
 
       while (extracted2 != NULL)
@@ -152,27 +176,34 @@ void extractDataImg(const char* filename)
           nb_zeros = atoi(a);
           for (j = 0; j < nb_zeros; j++)
           {
-            data[i] = 0;
+            ds.data[k].pixel[i] = 0;
             i++;
           }
         }
         else
         {
           pixel = (unsigned char)atoi(extracted2);
-          data[i] = pixel;
+          ds.data[k].pixel[i] = pixel;
           i++;
         }
         extracted2 = strtok(NULL, ";");
       }
-      saveBMP(data, rows, cols, "1.bmp");
+      k++;
     }
     fclose(file);
   }
+  return ds;
 }
 
 
 int main(void)
 {
-  extractDataImg("test_images.txt");
+  dataset_t ds;
+  ds = extractDataImg("test_images.txt");
+
+  saveBMP(ds.data[0].pixel, ds.rows, ds.cols, "1.bmp");      
+  saveBMP(ds.data[1].pixel, ds.rows, ds.cols, "2.bmp");
+  saveBMP(ds.data[2].pixel, ds.rows, ds.cols, "3.bmp");
+
   return EXIT_SUCCESS;
 }
