@@ -4,7 +4,7 @@
 #define N_NEURONES_ENTREE 784
 #define N_NEURONE_SORTIE 10
 #define N_NEURONE_CACHEE 16
-#define READ_MAX 1000
+#define READ_MAX 10000
 
 
 // structure pour un neurone
@@ -65,3 +65,6 @@ double sigmoide(double output);
 double aleat(int a, int b);
 void saveBMP(unsigned char data[], int rows, int cols, const char* filename);
 dataset_t extractDataImg(const char* filename);
+layer_t createLayer(int nb_neurones, int nb_entrees);
+void addLayerToNetwork(reseau_t* network, layer_t layer);
+reseau_t createNetworkFromFile(int nb_layers, const char* filename);
