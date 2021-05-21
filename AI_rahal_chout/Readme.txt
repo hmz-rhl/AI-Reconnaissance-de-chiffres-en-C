@@ -1,5 +1,25 @@
 Nom du projet : Intelligence artificielle
 Binôme : RAHAL Hamza / CHOUT Jawad
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Date de la séance : Vendredi 21 Mai 2021
+
+
+Bonjour monsieur Dubessy, 
+
+Voici nos réalisations de cette séance :
+
+-> Tout d'abord, nous avons atteint l'objectif de la séance dernière qui était de "Créer et initialiser un réseau". 
+-> Nous avons mis au point la fonction "layer_t createLayer(int nb_neurones, int nb_entrees)" qui va nous permettre de créer un layer vide.
+-> Nous avons mis au point la fonction "void addLayerToNetwork(reseau_t* network, layer_t layer)" qui va nous permettre d'ajouter un layer dans le réseau.
+-> Nous avons mis au point la fonction "reseau_t createNetworkFromFile(int nb_layers, const char* filename)" qui va nous permettre de créer et initialiser un réseau à partir d'un fichier .csv (ce fichier nous fournit les poids
+et le biais pour chaque neurone de chaque layer). En initialisant ce réseau avec ces coefficients, on obtient un réseau déjà entrainé, capable de reconnaitre les chiffres de 0 à 9 avec une grande précision.
+-> Enfin, on a définit la fonction "void testNetwork(reseau_t network, dataset_t ds)", qui va tester la performance du réseau entraîné (càd sa capacité à reconnaître le chiffre de l'image) à l'aide du dataset créé
+à partir du fichier "images_data.csv". On obtient alors un très bon résultat : ce réseau entraîné reconnaît les chiffres avec un taux de reconnaissance de 97,658333% !
+
+
+Objectif suivant : Débuter l'apprentissage d'un réseau non entrainé.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Date de la séance : Vendredi 14 Mai 2021
