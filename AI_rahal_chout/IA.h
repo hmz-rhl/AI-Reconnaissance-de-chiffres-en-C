@@ -7,6 +7,8 @@
 #define READ_MAX 10000
 
 
+// ---------------------------------------------- Déclarations et définitions des structures ---------------------------------------------- //
+
 // structure pour un neurone
 typedef struct neurone_s
 {
@@ -60,11 +62,16 @@ typedef struct dataset_s
   subdata_t* data;
 }dataset_t;
 
-// Déclarations des fonctions
+
+// ---------------------------------------------- Déclarations des fonctions ---------------------------------------------- //
 double sigmoide(double output);
-double aleat(int a, int b);
 void saveBMP(unsigned char data[], int rows, int cols, const char* filename);
 dataset_t extractDataImg(const char* filename);
 layer_t createLayer(int nb_neurones, int nb_entrees);
 void addLayerToNetwork(reseau_t* network, layer_t layer);
 reseau_t createNetworkFromFile(int nb_layers, const char* filename);
+void printLayer(layer_t layer);
+void printNetwork(reseau_t network);
+double produit_scalaire(double* a, double* b, int taille_vect);
+int maxOutput(double* tab, int taille_tab);
+void testNetwork(reseau_t network, dataset_t ds);

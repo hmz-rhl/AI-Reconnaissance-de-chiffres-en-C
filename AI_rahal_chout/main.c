@@ -8,17 +8,12 @@
 
 #include "IA.h"
 
-// Définitions des fonctions
+// ---------------------------------------------- Définitions des fonctions ---------------------------------------------- //
+
 // fonction sigmoide retourne valeur entre 0 et 1
 double sigmoide(double output)
 {
   return 1.0 / (1.0 + exp(-output));
-}
-
-// fonction nombre réel aleatoire
-double aleat(int a, int b)
-{
-  return (double)((rand() / (double)RAND_MAX) * (b - a) + a);
 }
 
 // fonction de sauvegarde des images au format BMP
@@ -84,7 +79,7 @@ dataset_t extractDataImg(const char* filename)
     fgets(chaine, READ_MAX, file);
     char* extracted = strtok(chaine, ";");
     ds.nb_images = atoi(extracted);
-
+ 
     extracted = strtok(NULL, ";");
     ds.rows = atoi(extracted);
 
@@ -99,7 +94,7 @@ dataset_t extractDataImg(const char* filename)
       ds.data[k].pixel = calloc(ds.size, sizeof(unsigned char));
       i = 0;
       char* extracted2 = strtok(chaine, ";");
-      ds.data[k].number_expected = atoi(extracted);
+      ds.data[k].number_expected = atoi(extracted2);
       extracted2 = strtok(NULL, ";");
 
       while (extracted2 != NULL)
@@ -129,7 +124,7 @@ dataset_t extractDataImg(const char* filename)
   return ds;
 }
 
-// fonction qui créer un layer vide    !!!!! REFLECHIR A PQ PAS SUPPRIMER LE MALLOC DU TAB DE SORTIES (pensez à simplement faire une copie...) !!!!!
+// fonction qui créer un layer vide  
 layer_t createLayer(int nb_neurones, int nb_entrees)
 {
   layer_t layer;
@@ -159,14 +154,18 @@ layer_t createLayer(int nb_neurones, int nb_entrees)
   }
 
   layer.neurone->nb = nb_entrees;
-  layer.neurone->poids = calloc(layer.neurone->nb, sizeof(double));
-  if (layer.neurone->poids == NULL)
-  {
-    printf("createLayer : Erreur allocation dynamique de mémoire pour le tableau de poids !\n");
-    exit(1);
-  }
 
   int i;
+  for (i = 0; i < nb_neurones; i++)
+  {
+    layer.neurone[i].poids = calloc(layer.neurone->nb, sizeof(double));
+    if (layer.neurone[i].poids == NULL)
+    {
+      printf("createLayer : Erreur allocation dynamique de mémoire pour le tableau de poids !\n");
+      exit(1);
+    }
+  }
+
   for (i = 0; i < nb_neurones; i++)      
   {
     layer.neurone[i].biais = 0;
@@ -249,30 +248,118 @@ reseau_t createNetworkFromFile(int nb_layers, const char* filename)
   return network;
 }
 
-int calculResultat(int, reseau_t* network)
+// fonction qui affiche le contenu d'un layer
+void printLayer(layer_t layer)
 {
-
+  printf("Ce layer contient %d neurones, %d entrees et %d sorties. \n", layer.nb_neurone, layer.nb_entree, layer.nb_sortie);
 }
 
+// fonction qui affiche le contenu d'un réseau
+void printNetwork(reseau_t network)
+{
+  int i = 1;
+  if ((network.tete == NULL) && (network.queue == NULL))
+  {
+    fprintf(stderr, "Empty network!");
+    printf("\n");
+  }
+  else
+  {
+    node_layer_t* node;
+    node = network.tete;
+    while (node != network.queue)
+    {
+      printf("Layer n#%d\n", i);
+      printLayer(node->layer);
+      node = node->suiv;
+      i++;
+    }
+    printf("Layer n#%d:\n", i);
+    printLayer(network.queue->layer);
+  }
+  printf("\n");
+}
+
+// fonction qui calcule le produit scalaire entre 2 vecteurs
+double produit_scalaire(double* a, double* b, int taille_vect)
+{
+  double res = 0;
+  for (int i = 0; i < taille_vect; i++)
+  {
+    res += a[i] * b[i];
+  }
+  return res;
+}
+
+// fonction qui renvoie l'indice de la valeur maximale du tableau
+int maxOutput(double* tab, int taille_tab)
+{
+  int max = 0;
+  int i;
+
+  for (i = 1; i < taille_tab; i++)
+  {
+    max = (tab[i]>tab[max]) ? i : max;
+  }
+  return max;
+}
+
+// fonction qui teste un réseau opérationnel, et renvoie le chiffre qui a été lu sur l'image par ce réseau de neurones
+void testNetwork(reseau_t network, dataset_t ds)
+{
+  int i,j;
+  double succes = 0;
+  double taux_de_reussite;
+  node_layer_t* node = network.tete;
+
+  for (j = 0; j < ds.nb_images ; j++)
+  {
+    for (i = 0; i < node->layer.nb_entree; i++)
+    {
+      node->layer.entree[i] = ((double)ds.data[j].pixel[i]) / 255;                // on teste avec l'image 0 (= càd la 1ère image)
+    }
+
+    for (i = 0; i < node->layer.nb_sortie; i++)
+    {
+      node->layer.sortie[i] = sigmoide(produit_scalaire(node->layer.entree, node->layer.neurone[i].poids, node->layer.nb_entree) + node->layer.neurone[i].biais);
+    }
+
+    while (node->suiv != NULL)
+    {
+      node = node->suiv;
+
+      for (i = 0; i < node->layer.nb_entree; i++)
+      {
+        node->layer.entree[i] = node->prec->layer.sortie[i];
+      }
+
+      for (i = 0; i < node->layer.nb_sortie; i++)
+      {
+        node->layer.sortie[i] = sigmoide(produit_scalaire(node->layer.entree, node->layer.neurone[i].poids, node->layer.nb_entree) + node->layer.neurone[i].biais);
+      }
+    }
+
+    int chiffre_lu = maxOutput(node->layer.sortie, node->layer.nb_sortie);
+    printf("Chiffre attendu : %d\n", ds.data[j].number_expected);
+    printf("Chiffre predit par le reseau de neuronnes : %d\n\n", chiffre_lu);
+
+    succes = (ds.data[j].number_expected == chiffre_lu) ? succes + 1 : succes;
+    node = network.tete;
+  }
+  taux_de_reussite = (succes / ds.nb_images) * 100;
+  printf("Le taux de reconnaissance de ce reseau de neuronnes est de %f %% !\n", taux_de_reussite);
+}
+
+
+// ---------------------------------------------- Main ---------------------------------------------- //
 int main(void)
 {
-  //dataset_t ds;
-  //ds = extractDataImg("test_images.csv");
-  //saveBMP(ds.data[0].pixel, ds.rows, ds.cols, "1.bmp");      
-  //saveBMP(ds.data[1].pixel, ds.rows, ds.cols, "2.bmp");
-  //saveBMP(ds.data[2].pixel, ds.rows, ds.cols, "3.bmp");
-
-   //layer_t layer = createLayer(2,5);
-
-  //printf("Layer.nb_entree : %d\n", layer.nb_entree);
-  //printf("Layer.nb_sortie : %d\n", layer.nb_sortie);
-  //printf("Layer.nb_neurone : %d\n", layer.nb_neurone);
-
-  //printf("Layer.entree[0] : %f\n", layer.entree[0]);
-  //printf("Layer.entree[1] : %f\n", layer.entree[1]);
-  //printf("Layer.entree[4] : %f\n", layer.entree[4]);
-
   reseau_t reseau = createNetworkFromFile(2, "network_30_10.csv");
+  printNetwork(reseau);
 
+  dataset_t ds;
+  ds = extractDataImg("images_data.csv");
+  
+  testNetwork(reseau, ds);
   return EXIT_SUCCESS;
 }
