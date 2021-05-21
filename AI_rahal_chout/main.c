@@ -316,7 +316,7 @@ void testNetwork(reseau_t network, dataset_t ds)
   {
     for (i = 0; i < node->layer.nb_entree; i++)
     {
-      node->layer.entree[i] = ((double)ds.data[j].pixel[i]) / 255;                // on teste avec l'image 0 (= càd la 1ère image)
+      node->layer.entree[i] = ((double)ds.data[j].pixel[i]) / 255;                
     }
 
     for (i = 0; i < node->layer.nb_sortie; i++)
