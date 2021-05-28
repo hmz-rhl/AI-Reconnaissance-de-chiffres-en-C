@@ -350,6 +350,46 @@ void testNetwork(reseau_t network, dataset_t ds)
   printf("Le taux de reconnaissance de ce reseau de neuronnes est de %f %% !\n", taux_de_reussite);
 }
 
+// fonction qui implémente delta_L
+void delta_L(layer_t* layer, int nb_layers, int number_expected)
+{
+  int i;
+  int L = nb_layers - 1;                      // L = indice du dernier layer -> le "-1" vient du fait que l'on commence le comptage des indices à 0
+  for (i = 0; i < layer[L].nb_neurone; i++)
+  {
+    layer[L].neurone[i].delta = (layer[L].sortie[i] - (i == number_expected)) * layer[L].sortie[i] * (1 - layer[L].sortie[i]) + layer[L].neurone[i].old_delta;
+  }
+  layer[L].neurone[i].old_delta = layer[L].neurone[i].delta;
+}
+
+// fonction qui implémente delta_l
+void delta_l(layer_t* layer, int nb_layers)
+{
+  int l, i, k;
+  int L = nb_layers - 1;
+
+  for (l = L-1; l >= 0; l--)     // boucle qui parcourt les layers      
+  {
+    for (i = 0; i < layer[l].nb_neurone; i++)
+    {
+      layer[l].neurone[i].delta = 0;
+      for (k = 0; k < layer[l+1].nb_neurone; k++)
+      {
+        layer[l].neurone[i].delta += layer[l + 1].neurone[k].delta * layer[l + 1].neurone[k].poids[i];
+      }
+      layer[l].neurone[i].delta = layer[l].neurone[i].delta * layer[l].sortie[i] * (1 - layer[l].sortie[i]) + layer[l].neurone[i].old_delta;
+      layer[l].neurone[i].old_delta = layer[l].neurone[i].delta;
+    }
+  }
+}
+
+// fonction qui implémente l'algorithme de backpropagation
+void backPropagation(layer_t* layer, int nb_layers, int number_expected)
+{
+  delta_L(layer, nb_layers, number_expected);
+  delta_l(layer, nb_layers);
+}
+
 
 // ---------------------------------------------- Main ---------------------------------------------- //
 int main(void)
