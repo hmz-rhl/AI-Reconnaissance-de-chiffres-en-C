@@ -10,6 +10,12 @@
 
 // ---------------------------------------------- Définitions des fonctions ---------------------------------------------- //
 
+// fonction qui renvoie un nombre aléatoire entre a et b
+double rand_double(double a, double b)
+{
+  return ((double)rand() * (b - a)) / (double)RAND_MAX + a;
+}
+
 // fonction sigmoide retourne valeur entre 0 et 1
 double sigmoide(double output)
 {
@@ -170,7 +176,13 @@ layer_t createLayer(int nb_neurones, int nb_entrees)
   {
     layer.neurone[i].biais = 0;
     layer.neurone[i].delta_biais = 0;
-    layer.neurone[i].delta_poids = 0;
+
+    layer.neurone[i].delta_poids = calloc(layer.nb_entree, sizeof(double));
+    if (layer.neurone[i].delta_poids == NULL)
+    {
+      printf("createLayer : Erreur allocation dynamique de mémoire pour le tableau de delta poids !\n");
+      exit(1);
+    }
   }
 
   return layer;
@@ -250,6 +262,36 @@ reseau_t createNetworkFromFile(int nb_layers, const char* filename)
   return network;
 }
 
+// fonction qui créer un réseau initialisé avec des poids et biais aléatoires
+reseau_t createNetwork(int nb_layers, int nb_entrees_1st_layer, int* nb_neurones_layer)
+{
+  reseau_t network = { NULL, NULL };
+  layer_t* layers = calloc(nb_layers, sizeof(layer_t));
+  int i, j, k;
+  int nb_entrees = nb_entrees_1st_layer;
+
+  for (i = 0; i < nb_layers; i++)
+  {
+    layers[i].nb_entree = nb_entrees;
+    layers[i].nb_neurone = nb_neurones_layer[i];
+    layers[i].nb_sortie = layers[i].nb_neurone;
+    layers[i] = createLayer(layers[i].nb_neurone, layers[i].nb_entree);
+
+    for (j = 0; j < layers[i].nb_neurone; j++)
+    {
+      layers[i].neurone[j].biais = rand_double(-10, 10);
+
+      for (k = 0; k < nb_entrees; k++)
+      {
+        layers[i].neurone[j].poids[k] = rand_double(-10, 10);
+      }
+    }
+    addLayerToNetwork(&network, layers[i]);
+    nb_entrees = layers[i].nb_sortie;
+  }
+  return network;
+}
+
 // fonction qui affiche le contenu d'un layer
 void printLayer(layer_t layer)
 {
@@ -314,7 +356,7 @@ void testNetwork(reseau_t network, dataset_t ds)
   double taux_de_reussite;
   node_layer_t* node = network.tete;
 
-  for (j = 0; j < ds.nb_images ; j++)
+  for (j = 0; j < 50000 ; j++)     // pas oublier de modif -> j = 0      //ds.nb_images
   {
     for (i = 0; i < node->layer.nb_entree; i++)
     {
@@ -352,89 +394,183 @@ void testNetwork(reseau_t network, dataset_t ds)
   printf("Le taux de reconnaissance de ce reseau de neuronnes est de %f %% !\n", taux_de_reussite);
 }
 
+// fonction qui effectue le feedForward
+void feedForward(reseau_t network, unsigned char* data_image)
+{
+  int i;
+  node_layer_t* node = network.tete;
+
+  for (i = 0; i < node->layer.nb_entree; i++)
+  {
+    node->layer.entree[i] = ((double)data_image[i]) / 255;
+  }
+
+  for (i = 0; i < node->layer.nb_sortie; i++)
+  {
+    node->layer.sortie[i] = sigmoide(produit_scalaire(node->layer.entree, node->layer.neurone[i].poids, node->layer.nb_entree) + node->layer.neurone[i].biais);
+  }
+
+  while (node->suiv != NULL)
+  {
+    node = node->suiv;
+
+    for (i = 0; i < node->layer.nb_entree; i++)
+    {
+      node->layer.entree[i] = node->prec->layer.sortie[i];
+    }
+
+    for (i = 0; i < node->layer.nb_sortie; i++)
+    {
+      node->layer.sortie[i] = sigmoide(produit_scalaire(node->layer.entree, node->layer.neurone[i].poids, node->layer.nb_entree) + node->layer.neurone[i].biais);
+    }
+  }
+  node = network.tete;
+}
+
 // fonction qui implémente delta_L
-void delta_L(layer_t* layer, int nb_layers, int number_expected)
+void delta_L(reseau_t network, int number_expected)
 {
   int i, j;
-  int L = nb_layers - 1;                      // L = indice du dernier layer -> le "-1" vient du fait que l'on commence le comptage des indices à 0
 
-  for (i = 0; i < layer[L].nb_neurone; i++)
+  node_layer_t* node;
+  node = network.queue;
+
+  for (i = 0; i < node->layer.nb_neurone; i++)
   {
-    layer[L].neurone[i].delta = ( layer[L].sortie[i] - (i == number_expected) ) * ( layer[L].sortie[i] * (1 - layer[L].sortie[i]) );
-    layer[L].neurone[i].delta_biais += layer[L].neurone[i].delta;
+    node->layer.neurone[i].delta = (node->layer.sortie[i] - (i == number_expected) ) * (node->layer.sortie[i] * (1 - node->layer.sortie[i]) );
+    node->layer.neurone[i].delta_biais += node->layer.neurone[i].delta;
    
-    for (j = 0; j < layer[L].nb_entree; j++)
+    for (j = 0; j < node->layer.nb_entree; j++)
     {
-      layer[L].neurone[i].delta_poids[j] += layer[L].entree[j] * layer[L].neurone[i].delta;
+      node->layer.neurone[i].delta_poids[j] += node->layer.entree[j] * node->layer.neurone[i].delta;
     }
   }
 }
 
 // fonction qui implémente delta_l
-void delta_l(layer_t* layer, int nb_layers)
+void delta_l(reseau_t network)
 {
   int l, i, j, k;
-  int L = nb_layers - 1;
 
-  for (l = L-1; l >= 0; l--)     // boucle qui parcourt les layers      
+  node_layer_t* node;
+  node = network.queue->prec;
+
+  while (node != NULL)
   {
-    for (i = 0; i < layer[l].nb_neurone; i++)
+    for (i = 0; i < node->layer.nb_neurone; i++)
     {
-      layer[l].neurone[i].delta = 0;
-      for (k = 0; k < layer[l+1].nb_neurone; k++)
+      node->layer.neurone[i].delta = 0;
+      for (k = 0; k < node->suiv->layer.nb_neurone; k++)
       {
-        layer[l].neurone[i].delta += layer[l + 1].neurone[k].delta * layer[l + 1].neurone[k].poids[i];
+        node->layer.neurone[i].delta += node->suiv->layer.neurone[k].delta * node->suiv->layer.neurone[k].poids[i];
       }
-      layer[l].neurone[i].delta = layer[l].neurone[i].delta * ( layer[l].sortie[i] * (1 - layer[l].sortie[i]) );
-      layer[l].neurone[i].delta_biais += layer[l].neurone[i].delta;
+      node->layer.neurone[i].delta = node->layer.neurone[i].delta * (node->layer.sortie[i] * (1 - node->layer.sortie[i]));
+      node->layer.neurone[i].delta_biais += node->layer.neurone[i].delta;
 
-      for (j = 0; j < layer[l].nb_entree; j++)
+      for (j = 0; j < node->layer.nb_entree; j++)
       {
-        layer[l].neurone[i].delta_poids[j] += layer[l].entree[j] * layer[l].neurone[i].delta;
+        node->layer.neurone[i].delta_poids[j] += node->layer.entree[j] * node->layer.neurone[i].delta;
       }
     }
+    node = node->prec;
   }
 }
 
 // fonction qui implémente l'algorithme de backpropagation
-void backPropagation(layer_t* layer, int nb_layers, int number_expected)
+void backPropagation(reseau_t network, int number_expected)
 {
-  delta_L(layer, nb_layers, number_expected);
-  delta_l(layer, nb_layers);
+  delta_L(network, number_expected);
+  delta_l(network);
 }
 
 // fonction qui effectue la descente de gradient
-void gradientDescent(layer_t* layer, int nb_layers, double l_rate, int nb_training_exemples)
+void gradientDescent(reseau_t network, double l_rate, int nb_training_exemples)      
 {
   int l, i, j;
-  int L = nb_layers - 1;
+  node_layer_t* node;
+  node = network.queue;
 
-  for (l = L; l >= 0; l--)
+  while (node != NULL)   
   {
-    for (i = 0; i < layer[l].nb_neurone; i++)
+    for (i = 0; i < node->layer.nb_neurone; i++)
     {
-      layer[l].neurone[i].biais -= (l_rate / nb_training_exemples) * layer[l].neurone[i].delta_biais;
-      for (j = 0; j < layer[l].nb_entree; j++)
+      node->layer.neurone[i].biais -= (l_rate / nb_training_exemples) * node->layer.neurone[i].delta_biais;
+      for (j = 0; j < node->layer.nb_entree; j++)
       {
-        layer[l].neurone[i].poids[j] -= (l_rate / nb_training_exemples) * layer[l].neurone[i].delta_poids[j];
+        node->layer.neurone[i].poids[j] -= (l_rate / nb_training_exemples) * node->layer.neurone[i].delta_poids[j];
       }
     }
+    node = node->prec;
+  }
+
+  // remise à 0 des deltas pour les couche L, L-1, L-2, etc.
+  node = network.queue;
+  while (node != NULL)
+  {
+    for (i = 0; i < node->layer.nb_neurone; i++)
+    {
+      node->layer.neurone[i].delta_biais = 0;
+
+      for (j = 0; j < node->layer.nb_entree; j++)
+      {
+        node->layer.neurone[i].delta_poids[j] = 0;
+      }
+    }
+    node = node->prec;
   }
 }
 
-//  1) CREER LA FONCTION createNetwork
-//  2) Séparer le dataset en sous-dataset d'entrainements + un dataset de test
-//  3) CREER LA FONCTION trainNetwork
+// fonction qui entraine le réseau avec un set d'images
+void trainNetwork(reseau_t network, dataset_t ds, int ind_first_image_dataset, int ind_last_image_dataset, double learning_rate)
+{
+  int i,j,k;
+  int nb_training_exemples = (ind_last_image_dataset - ind_first_image_dataset) + 1;  
+  int nb_sous_groupes = 50;
+  int nb_images_par_sous_groupe = nb_training_exemples / nb_sous_groupes;
+
+  for (j = 0; j < nb_sous_groupes; j++)
+  {
+    printf("----- Debut de l'epoque %d / %d -----\n", j, nb_sous_groupes);
+
+    for (k = 0; k < 10; k++)
+    {
+      for (i = 0; i <= nb_images_par_sous_groupe; i++)
+      {
+        feedForward(network, ds.data[ind_last_image_dataset + (nb_sous_groupes * j + i)].pixel);
+        backPropagation(network, ds.data[i].number_expected);
+      }
+      printf("gradientDescent : correction...\n");
+      gradientDescent(network, learning_rate, nb_images_par_sous_groupe);
+    }
+    printf("----- Fin de l'epoque %d / %d -----\n", j, nb_sous_groupes);
+  }
+}
+
 
 // ---------------------------------------------- Main ---------------------------------------------- //
 int main(void)
 {
-  reseau_t reseau = createNetworkFromFile(2, "network_30_10.csv");
-  printNetwork(reseau);
+  srand(time(NULL));
+
+  //reseau_t reseau = createNetworkFromFile(2, "network_30_10.csv");
+  //printNetwork(reseau);
+
+  //dataset_t ds;
+  //ds = extractDataImg("images_data.csv");
+  
+  //testNetwork(reseau, ds);
+
+  int nb_layers = 2;
+  int nb_entrees_1st_layer = 784;
+  int nb_neurones_layer[2] = {30 , 10};
 
   dataset_t ds;
   ds = extractDataImg("images_data.csv");
   
+  reseau_t reseau = createNetwork(nb_layers, nb_entrees_1st_layer, nb_neurones_layer);
+
+  printNetwork(reseau);
+  trainNetwork(reseau, ds, 0, 30000, 1);
   testNetwork(reseau, ds);
   return EXIT_SUCCESS;
 }

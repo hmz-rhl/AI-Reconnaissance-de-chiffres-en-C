@@ -67,19 +67,22 @@ typedef struct dataset_s
 
 
 // ---------------------------------------------- Déclarations des fonctions ---------------------------------------------- //
+double rand_double(double a, double b);
 double sigmoide(double output);
 void saveBMP(unsigned char data[], int rows, int cols, const char* filename);
 dataset_t extractDataImg(const char* filename);
 layer_t createLayer(int nb_neurones, int nb_entrees);
 void addLayerToNetwork(reseau_t* network, layer_t layer);
 reseau_t createNetworkFromFile(int nb_layers, const char* filename);
+reseau_t createNetwork(int nb_layers, int nb_entrees_1st_layer, int* nb_neurones_layer);
 void printLayer(layer_t layer);
 void printNetwork(reseau_t network);
 double produit_scalaire(double* a, double* b, int taille_vect);
 int maxOutput(double* tab, int taille_tab);
 void testNetwork(reseau_t network, dataset_t ds);
-void delta_L(layer_t* layer, int nb_layers, int number_expected);
-void delta_l(layer_t* layer, int nb_layers);
-void backPropagation(layer_t* layer, int nb_layers, int number_expected);
-void gradientDescent(layer_t* layer, int nb_layers, double l_rate, int nb_training_exemples);
-
+void feedForward(reseau_t network, unsigned char* data_image);
+void delta_L(reseau_t network, int number_expected);
+void delta_l(reseau_t network);
+void backPropagation(reseau_t network, int number_expected);
+void gradientDescent(reseau_t network, double l_rate, int nb_training_exemples);
+void trainNetwork(reseau_t network, dataset_t ds, int ind_first_image_dataset, int ind_last_image_dataset, double learning_rate);
