@@ -1,5 +1,21 @@
 Nom du projet : Intelligence artificielle
 Binôme : RAHAL Hamza / CHOUT Jawad
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Date de la séance : Vendredi 28 Mai 2021
+
+
+Bonjour monsieur Dubessy, 
+
+Voici nos réalisations de cette séance :
+ 
+-> Nous avons mis à jour la structure de données "neurone_t" en lui ajoutant deux champs : un champ "delta" de type double, et un champ "old_delta" de type double
+-> Nous avons mis au point la fonction "void delta_L(layer_t* layer, int nb_layers, int number_expected)" qui va nous permettre d'implémenter l'équation BP1 (à re-vérifier!)
+-> Nous avons mis au point la fonction "void delta_l(layer_t* layer, int nb_layers)" qui va nous permettre d'implémenter l'équation BP2 (à re-vérifier!)
+-> Nous avons mis au point la fonction "void backPropagation(layer_t* layer, int nb_layers, int number_expected)" qui va faire l'algorithme de backpropagation
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Date de la séance : Vendredi 21 Mai 2021
 

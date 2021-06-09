@@ -169,6 +169,8 @@ layer_t createLayer(int nb_neurones, int nb_entrees)
   for (i = 0; i < nb_neurones; i++)      
   {
     layer.neurone[i].biais = 0;
+    layer.neurone[i].delta_biais = 0;
+    layer.neurone[i].delta_poids = 0;
   }
 
   return layer;
@@ -353,19 +355,25 @@ void testNetwork(reseau_t network, dataset_t ds)
 // fonction qui implémente delta_L
 void delta_L(layer_t* layer, int nb_layers, int number_expected)
 {
-  int i;
+  int i, j;
   int L = nb_layers - 1;                      // L = indice du dernier layer -> le "-1" vient du fait que l'on commence le comptage des indices à 0
+
   for (i = 0; i < layer[L].nb_neurone; i++)
   {
-    layer[L].neurone[i].delta = (layer[L].sortie[i] - (i == number_expected)) * layer[L].sortie[i] * (1 - layer[L].sortie[i]) + layer[L].neurone[i].old_delta;
+    layer[L].neurone[i].delta = ( layer[L].sortie[i] - (i == number_expected) ) * ( layer[L].sortie[i] * (1 - layer[L].sortie[i]) );
+    layer[L].neurone[i].delta_biais += layer[L].neurone[i].delta;
+   
+    for (j = 0; j < layer[L].nb_entree; j++)
+    {
+      layer[L].neurone[i].delta_poids[j] += layer[L].entree[j] * layer[L].neurone[i].delta;
+    }
   }
-  layer[L].neurone[i].old_delta = layer[L].neurone[i].delta;
 }
 
 // fonction qui implémente delta_l
 void delta_l(layer_t* layer, int nb_layers)
 {
-  int l, i, k;
+  int l, i, j, k;
   int L = nb_layers - 1;
 
   for (l = L-1; l >= 0; l--)     // boucle qui parcourt les layers      
@@ -377,8 +385,13 @@ void delta_l(layer_t* layer, int nb_layers)
       {
         layer[l].neurone[i].delta += layer[l + 1].neurone[k].delta * layer[l + 1].neurone[k].poids[i];
       }
-      layer[l].neurone[i].delta = layer[l].neurone[i].delta * layer[l].sortie[i] * (1 - layer[l].sortie[i]) + layer[l].neurone[i].old_delta;
-      layer[l].neurone[i].old_delta = layer[l].neurone[i].delta;
+      layer[l].neurone[i].delta = layer[l].neurone[i].delta * ( layer[l].sortie[i] * (1 - layer[l].sortie[i]) );
+      layer[l].neurone[i].delta_biais += layer[l].neurone[i].delta;
+
+      for (j = 0; j < layer[l].nb_entree; j++)
+      {
+        layer[l].neurone[i].delta_poids[j] += layer[l].entree[j] * layer[l].neurone[i].delta;
+      }
     }
   }
 }
@@ -390,6 +403,28 @@ void backPropagation(layer_t* layer, int nb_layers, int number_expected)
   delta_l(layer, nb_layers);
 }
 
+// fonction qui effectue la descente de gradient
+void gradientDescent(layer_t* layer, int nb_layers, double l_rate, int nb_training_exemples)
+{
+  int l, i, j;
+  int L = nb_layers - 1;
+
+  for (l = L; l >= 0; l--)
+  {
+    for (i = 0; i < layer[l].nb_neurone; i++)
+    {
+      layer[l].neurone[i].biais -= (l_rate / nb_training_exemples) * layer[l].neurone[i].delta_biais;
+      for (j = 0; j < layer[l].nb_entree; j++)
+      {
+        layer[l].neurone[i].poids[j] -= (l_rate / nb_training_exemples) * layer[l].neurone[i].delta_poids[j];
+      }
+    }
+  }
+}
+
+//  1) CREER LA FONCTION createNetwork
+//  2) Séparer le dataset en sous-dataset d'entrainements + un dataset de test
+//  3) CREER LA FONCTION trainNetwork
 
 // ---------------------------------------------- Main ---------------------------------------------- //
 int main(void)

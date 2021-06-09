@@ -16,7 +16,8 @@ typedef struct neurone_s
   double* poids;		// un tableau de poids
   double biais;		  // une valeur de biais
   double delta;
-  double old_delta;
+  double delta_biais;
+  double* delta_poids;
 }neurone_t;
 
 
@@ -80,4 +81,5 @@ void testNetwork(reseau_t network, dataset_t ds);
 void delta_L(layer_t* layer, int nb_layers, int number_expected);
 void delta_l(layer_t* layer, int nb_layers);
 void backPropagation(layer_t* layer, int nb_layers, int number_expected);
+void gradientDescent(layer_t* layer, int nb_layers, double l_rate, int nb_training_exemples);
 
