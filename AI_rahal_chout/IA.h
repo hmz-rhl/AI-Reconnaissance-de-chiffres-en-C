@@ -1,10 +1,12 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_DEPRECATE
 
 // constantes
 #define N_NEURONES_ENTREE 784
 #define N_NEURONE_SORTIE 10
 #define N_NEURONE_CACHEE 16
 #define READ_MAX 10000
+#define WRITE_MAX 10000
 
 
 // ---------------------------------------------- Déclarations et définitions des structures ---------------------------------------------- //
@@ -79,10 +81,12 @@ void printLayer(layer_t layer);
 void printNetwork(reseau_t network);
 double produit_scalaire(double* a, double* b, int taille_vect);
 int maxOutput(double* tab, int taille_tab);
-void testNetwork(reseau_t network, dataset_t ds);
 void feedForward(reseau_t network, unsigned char* data_image);
+void testNetwork(reseau_t network, dataset_t ds);
 void delta_L(reseau_t network, int number_expected);
 void delta_l(reseau_t network);
 void backPropagation(reseau_t network, int number_expected);
 void gradientDescent(reseau_t network, double l_rate, int nb_training_exemples);
-void trainNetwork(reseau_t network, dataset_t ds, int ind_first_image_dataset, int ind_last_image_dataset, double learning_rate);
+void shuffleDataset(dataset_t ds);
+void trainNetwork(reseau_t network, dataset_t ds, int nb_images, int nb_sous_groupes, double learning_rate);
+void saveNetwork(reseau_t network, const char* filename);
