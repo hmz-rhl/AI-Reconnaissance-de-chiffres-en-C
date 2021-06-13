@@ -362,8 +362,6 @@ void feedForward(reseau_t network, unsigned char* data_image)
   int i;
   node_layer_t* node = network.tete;
 
-  unsigned char x = data_image[781];
-
   for (i = 0; i < node->layer.nb_entree; i++)
   {
     node->layer.entree[i] = ((double)data_image[i]) / 255;
@@ -541,8 +539,8 @@ void trainNetwork(reseau_t network, dataset_t ds, int nb_images, int nb_sous_gro
     {
       for (i = 0; i < nb_images_par_sous_groupe; i++)
       {
-        feedForward(network, ds.data[nb_sous_groupes * j + i].pixel);
-        backPropagation(network, ds.data[i].number_expected);
+        feedForward(network, ds.data[nb_images_par_sous_groupe * j + i].pixel);
+        backPropagation(network, ds.data[nb_images_par_sous_groupe * j + i].number_expected);
       }
       gradientDescent(network, learning_rate, nb_images_par_sous_groupe);
     }
@@ -617,7 +615,7 @@ int main(void)
 
   reseau_t reseau = createNetwork(nb_layers, nb_entrees_1st_layer, nb_neurones_layer);
   printNetwork(reseau);
-  trainNetwork(reseau, ds, ds.nb_images, 100, 0.7);
+  trainNetwork(reseau, ds, ds.nb_images, 6000, 0.);
   testNetwork(reseau, ds);
   saveNetwork(reseau, "my_network.csv");
   return EXIT_SUCCESS;
