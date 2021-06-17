@@ -3,6 +3,13 @@
 #define _CRT_NONSTDC_NO_DEPRECATE
 #define READ_MAX 10000
 #define WRITE_MAX 10000
+#define LOAD_DATA '1'
+#define LOAD_NETWK '2'
+#define CREATE_NETWK '3'
+#define PRINT_NETWK '4'
+#define TRAIN '5'
+#define TEST '6'
+#define SAVE_NETWK '7'
 
 
 // ---------------------------------------------- Déclarations et définitions des structures ---------------------------------------------- //

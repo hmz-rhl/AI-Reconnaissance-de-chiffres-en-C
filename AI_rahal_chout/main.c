@@ -140,6 +140,7 @@ dataset_t extractDataImg(const char* filename)
         fclose(file);
     }
     putchar('\n');
+    putchar('\a');
     return ds;
 }
 
@@ -641,7 +642,8 @@ int main(void)
     double learning_rate;
 
     char menu = '0';
-    char filename[30];
+    char network_filename[30] = "";
+    char data_filename[30] = "";
 
     reseau_t reseau = { NULL, NULL };
     dataset_t ds = { 0, 0, 0, 0, NULL };
@@ -657,32 +659,32 @@ int main(void)
         emptyBuffer();
         putchar('\n');
 
-        if (menu == '1')
+        if (menu == LOAD_DATA)
         {
             printf("  -> Entrez le nom du fichier contenant le dataset d'images (par exemple : images_data.csv) : ");
-            return_scanf = scanf("%s", filename);
+            return_scanf = scanf("%s", data_filename);
             emptyBuffer();
 
-            ds = extractDataImg(filename);
+            ds = extractDataImg(data_filename);
             dataset_charge = 1;
             printf("Fichier charge !\n");
             putchar('\n');
             waitSeconds(3);
         }
 
-        if (menu == '2')
+        if (menu == LOAD_NETWK)
         {
             printf("  -> Entrez le nom du fichier contenant le reseau de neurones deja entraine (par exemple : network_30_10.csv) : ");
-            return_scanf = scanf("%s", filename);
+            return_scanf = scanf("%s", network_filename);
             emptyBuffer();
-            reseau = createNetworkFromFile(2, filename);
-            printf("Reseau de neurones charge a partir du fichier '%s' !\n", filename);
+            reseau = createNetworkFromFile(2, network_filename);
+            printf("Reseau de neurones charge a partir du fichier '%s' !\n", network_filename);
             reseau_charge = 1;
             putchar('\n');
             waitSeconds(4);
         }
 
-        if (menu == '3')
+        if (menu == CREATE_NETWK)
         {
             printf("  -> Entrez le nombre de layers du reseau : ");
             return_scanf = scanf("%d", &nb_layers);
@@ -705,7 +707,7 @@ int main(void)
             waitSeconds(4);
         }
 
-        if (menu == '4')
+        if (menu == PRINT_NETWK)
         {
             if (reseau_charge)
             {
@@ -718,7 +720,7 @@ int main(void)
             waitSeconds(5);
         }
 
-        if (menu == '5')
+        if (menu == TRAIN)
         {
             if (reseau_charge && dataset_charge)
             {
@@ -747,15 +749,24 @@ int main(void)
                   emptyBuffer();
                   putchar('\n');
                 }
-
+                
                 printf("  -> Entrez le learning rate : ");
                 return_scanf = scanf("%lf", &learning_rate);
                 emptyBuffer();
                 putchar('\n');
 
+                while (learning_rate <= 0)
+                {
+                    printf("  -> Entrez un learning rate VALIDE (> 0) : ");
+                    return_scanf = scanf("%lf", &learning_rate);
+                    emptyBuffer();
+                    putchar('\n');
+                }
+                printf("Une notification sonore vous avertira de la fin de l'entrainement\n\n");
+                waitSeconds(5);
                 printf("Debut de l'entrainement...\n");
                 trainNetwork(reseau, ds, ds.nb_images, nb_images_par_sous_groupe, nb_epoch, learning_rate);
-                printf("Entrainement du reseau termine !\n");
+                printf("Entrainement du reseau termine !\a\n");
             }
             else
             {
@@ -771,10 +782,12 @@ int main(void)
             waitSeconds(4);
         }
 
-        if (menu == '6')
+        if (menu == TEST)
         {
             if (reseau_charge && dataset_charge)
             {
+                printf("Test sur < %s >\n", data_filename);
+                waitSeconds(4);
                 testNetwork(reseau, ds);
             }
             else
@@ -791,15 +804,16 @@ int main(void)
             waitSeconds(6);
         }
 
-        if (menu == '7')
+        if (menu == SAVE_NETWK)
         {
             if (reseau_charge)
             {
                 printf("  -> Entrez le nom du fichier de sauvegarde : ");
-                return_scanf = scanf("%s", filename);
+                return_scanf = scanf("%s", network_filename);
                 emptyBuffer();
-                saveNetwork(reseau, filename);
-                printf("Reseau correctement sauvegarde dans le fichier '%s'\n", filename);
+                saveNetwork(reseau, network_filename);
+                waitSeconds(3);
+                printf("Reseau correctement sauvegarde dans le fichier '%s'\n", network_filename);
             }
             else
             {
