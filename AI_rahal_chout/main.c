@@ -762,7 +762,7 @@ int main(void)
                     emptyBuffer();
                     putchar('\n');
                 }
-                printf("Une notification sonore vous avertira de la fin de l'entrainement\n\n");
+                printf("Une notification sonore vous avertira de la fin de l'entrainement !\n\n");
                 waitSeconds(5);
                 printf("Debut de l'entrainement...\n");
                 trainNetwork(reseau, ds, ds.nb_images, nb_images_par_sous_groupe, nb_epoch, learning_rate);
@@ -813,7 +813,7 @@ int main(void)
                 emptyBuffer();
                 saveNetwork(reseau, network_filename);
                 waitSeconds(3);
-                printf("Reseau correctement sauvegarde dans le fichier '%s'\n", network_filename);
+                printf("Reseau correctement sauvegarde dans le fichier '%s'\a\n", network_filename);
             }
             else
             {
