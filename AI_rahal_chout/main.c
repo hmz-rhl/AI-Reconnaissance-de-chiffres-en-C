@@ -6,7 +6,6 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
-
 #include "IA.h"
 
 // ---------------------------------------------- Définitions des fonctions ---------------------------------------------- //
@@ -23,7 +22,7 @@ int rand_int(int a, int b)
     return rand() % (b - a + 1) + a;
 }
 
-// fonction sigmoide retourne valeur entre 0 et 1
+// fonction sigmoide
 double sigmoide(double output)
 {
     return 1.0 / (1.0 + exp(-output));
@@ -144,7 +143,7 @@ dataset_t extractDataImg(const char* filename)
     return ds;
 }
 
-// fonction qui créer un layer vide  
+// fonction qui crée un layer vide  
 layer_t createLayer(int nb_neurones, int nb_entrees)
 {
     layer_t layer;
@@ -229,7 +228,7 @@ void addLayerToNetwork(reseau_t* network, layer_t layer)
     }
 }
 
-// fonction qui créer un réseau depuis un fichier
+// fonction qui crée un réseau depuis un fichier
 reseau_t createNetworkFromFile(int nb_layers, const char* filename)
 {
     reseau_t network = { NULL, NULL };
@@ -238,6 +237,7 @@ reseau_t createNetworkFromFile(int nb_layers, const char* filename)
 
     int nb_entrees;
     char chaine[READ_MAX] = "";
+    char* extracted;
     FILE* file;
     file = fopen(filename, "r");
 
@@ -251,7 +251,7 @@ reseau_t createNetworkFromFile(int nb_layers, const char* filename)
         for (i = 0; i < nb_layers; i++)
         {
             fgets(chaine, READ_MAX, file);
-            char* extracted = strtok(chaine, ";");
+            extracted = strtok(chaine, ";");    
             nb_entrees = atoi(extracted);
             layers[i].nb_entree = nb_entrees;
 
@@ -264,12 +264,12 @@ reseau_t createNetworkFromFile(int nb_layers, const char* filename)
             for (j = 0; j < layers[i].nb_neurone; j++)
             {
                 fgets(chaine, READ_MAX, file);
-                char* extracted = strtok(chaine, ";");
+                extracted = strtok(chaine, ";");      
                 layers[i].neurone[j].biais = atof(extracted);
 
                 for (k = 0; k < nb_entrees; k++)
                 {
-                    char* extracted = strtok(NULL, ";");
+                    extracted = strtok(NULL, ";");        
                     layers[i].neurone[j].poids[k] = atof(extracted);
                 }
             }
@@ -279,7 +279,7 @@ reseau_t createNetworkFromFile(int nb_layers, const char* filename)
     return network;
 }
 
-// fonction qui créer un réseau initialisé avec des poids et biais aléatoires
+// fonction qui crée un réseau initialisé avec des poids et biais aléatoires
 reseau_t createNetwork(int nb_layers, int nb_entrees_1st_layer, int* nb_neurones_layer)
 {
     reseau_t network = { NULL, NULL };
@@ -287,8 +287,10 @@ reseau_t createNetwork(int nb_layers, int nb_entrees_1st_layer, int* nb_neurones
     int i, j, k;
     int nb_entrees = nb_entrees_1st_layer;
 
-    for (i = 0; i < nb_layers; i++)
+    if (layers)
     {
+      for (i = 0; i < nb_layers; i++)
+      {
         layers[i].nb_entree = nb_entrees;
         layers[i].nb_neurone = nb_neurones_layer[i];
         layers[i].nb_sortie = layers[i].nb_neurone;
@@ -296,15 +298,16 @@ reseau_t createNetwork(int nb_layers, int nb_entrees_1st_layer, int* nb_neurones
 
         for (j = 0; j < layers[i].nb_neurone; j++)
         {
-            layers[i].neurone[j].biais = rand_double(-2, 2);
+          layers[i].neurone[j].biais = rand_double(-2, 2);
 
-            for (k = 0; k < nb_entrees; k++)
-            {
-                layers[i].neurone[j].poids[k] = rand_double(-2, 2);
-            }
+          for (k = 0; k < nb_entrees; k++)
+          {
+            layers[i].neurone[j].poids[k] = rand_double(-2, 2);
+          }
         }
         addLayerToNetwork(&network, layers[i]);
         nb_entrees = layers[i].nb_sortie;
+      }
     }
     return network;
 }
@@ -319,7 +322,7 @@ void printLayer(layer_t layer)
 void printNetwork(reseau_t network)
 {
     int i = 1;
-    if ((network.tete == NULL) && (network.queue == NULL))
+    if ((network.tete == NULL) || (network.queue == NULL))
     {
         fprintf(stderr, "Empty network!");
         printf("\n");
@@ -342,7 +345,7 @@ void printNetwork(reseau_t network)
 }
 
 // fonction qui calcule le produit scalaire entre 2 vecteurs
-double produit_scalaire(double* a, double* b, int taille_vect)
+double produitScalaire(double* a, double* b, int taille_vect)
 {
     double res = 0;
     for (int i = 0; i < taille_vect; i++)
@@ -378,7 +381,7 @@ void feedForward(reseau_t network, unsigned char* data_image)
 
     for (i = 0; i < node->layer.nb_sortie; i++)
     {
-        node->layer.sortie[i] = sigmoide(produit_scalaire(node->layer.entree, node->layer.neurone[i].poids, node->layer.nb_entree) + node->layer.neurone[i].biais);
+        node->layer.sortie[i] = sigmoide(produitScalaire(node->layer.entree, node->layer.neurone[i].poids, node->layer.nb_entree) + node->layer.neurone[i].biais);
     }
 
     while (node->suiv != NULL)
@@ -392,7 +395,7 @@ void feedForward(reseau_t network, unsigned char* data_image)
 
         for (i = 0; i < node->layer.nb_sortie; i++)
         {
-            node->layer.sortie[i] = sigmoide(produit_scalaire(node->layer.entree, node->layer.neurone[i].poids, node->layer.nb_entree) + node->layer.neurone[i].biais);
+            node->layer.sortie[i] = sigmoide(produitScalaire(node->layer.entree, node->layer.neurone[i].poids, node->layer.nb_entree) + node->layer.neurone[i].biais);
         }
     }
 }
@@ -400,21 +403,21 @@ void feedForward(reseau_t network, unsigned char* data_image)
 // fonction qui teste l'efficacité d'un réseau
 void testNetwork(reseau_t network, dataset_t ds)
 {
-    int i, j;
+    int i;
     double succes = 0;
     double taux_de_reussite;
     node_layer_t* node;
 
-    for (j = 0; j < ds.nb_images; j++)
+    for (i = 0; i < ds.nb_images; i++)
     {
-        feedForward(network, ds.data[j].pixel);
+        feedForward(network, ds.data[i].pixel);
         node = network.queue;
 
         int chiffre_lu = maxOutput(node->layer.sortie, node->layer.nb_sortie);
-        printf("Chiffre attendu : %d\n", ds.data[j].number_expected);
+        printf("Chiffre attendu : %d\n", ds.data[i].number_expected);
         printf("Chiffre predit par le reseau de neuronnes : %d\n\n", chiffre_lu);
 
-        succes = (ds.data[j].number_expected == chiffre_lu) ? succes + 1 : succes;
+        succes = (ds.data[i].number_expected == chiffre_lu) ? succes + 1 : succes;
         node = network.tete;
     }
     taux_de_reussite = (succes / ds.nb_images) * 100;
@@ -444,7 +447,7 @@ void delta_L(reseau_t network, int number_expected)
 // fonction qui implémente delta_l
 void delta_l(reseau_t network)
 {
-    int l, i, j, k;
+    int i, j, k;
 
     node_layer_t* node;
     node = network.queue->prec;
@@ -480,7 +483,7 @@ void backPropagation(reseau_t network, int number_expected)
 // fonction qui effectue la descente de gradient
 void gradientDescent(reseau_t network, double l_rate, int nb_training_exemples)
 {
-    int l, i, j;
+    int i, j;
     node_layer_t* node;
     node = network.queue;
 
@@ -521,7 +524,6 @@ void shuffleDataset(dataset_t ds)
 void trainNetwork(reseau_t network, dataset_t ds, int nb_images, int nb_images_par_sous_groupe, int nb_epoch, double learning_rate)
 {
     int i, j, k;
-    //int nb_images_par_sous_groupe = nb_images / nb_sous_groupes;
     int nb_sous_groupes = nb_images / nb_images_par_sous_groupe;
 
     for (k = 0; k < nb_epoch; k++)
@@ -615,16 +617,16 @@ void printMenu(void)
 }
 
 // fonction qui effectue un delay en secondes
-void waitSeconds(unsigned int secondes)
+void waitSeconds(time_t secondes)
 {
-    unsigned int debut = time(0);
+    time_t debut = time(0);
     while (time(0) - debut < secondes);
 }
 
 // ---------------------------------------------- Main ---------------------------------------------- //
 int main(void)
 {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
     int i;
     int return_scanf;
@@ -641,8 +643,8 @@ int main(void)
     char menu = '0';
     char filename[30];
 
-    reseau_t reseau;
-    dataset_t ds;
+    reseau_t reseau = { NULL, NULL };
+    dataset_t ds = { 0, 0, 0, 0, NULL };
 
     while (menu != '8')
     {
@@ -720,18 +722,31 @@ int main(void)
         {
             if (reseau_charge && dataset_charge)
             {
-                do
+                printf("  -> Entrez le nombre d'images par sous-groupes : ");
+                return_scanf = scanf("%d", &nb_images_par_sous_groupe);
+                emptyBuffer();
+                putchar('\n');
+
+                while ((nb_images_par_sous_groupe <= 0) || (nb_images_par_sous_groupe > ds.nb_images))
                 {
-                    printf("  -> Entrez le nombre d'images par sous-groupes : ");
+                    printf("  -> Entrez un nombre d'images par sous-groupes VALIDE (entre 1 et 60000) : ");
                     return_scanf = scanf("%d", &nb_images_par_sous_groupe);
                     emptyBuffer();
                     putchar('\n');
-                } while ((nb_images_par_sous_groupe == 0) || (nb_images_par_sous_groupe > ds.nb_images));
+                }
 
                 printf("  -> Entrez le nombre d'epoques : ");
                 return_scanf = scanf("%d", &nb_epoch);
                 emptyBuffer();
                 putchar('\n');
+
+                while (nb_epoch <= 0)
+                {
+                  printf("  -> Entrez un nombre d'epoques VALIDE (> 0) : ");
+                  return_scanf = scanf("%d", &nb_epoch);
+                  emptyBuffer();
+                  putchar('\n');
+                }
 
                 printf("  -> Entrez le learning rate : ");
                 return_scanf = scanf("%lf", &learning_rate);

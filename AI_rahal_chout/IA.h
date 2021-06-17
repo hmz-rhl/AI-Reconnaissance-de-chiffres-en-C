@@ -1,10 +1,6 @@
+// #define
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRT_NONSTDC_NO_DEPRECATE
-
-// constantes
-#define N_NEURONES_ENTREE 784
-#define N_NEURONE_SORTIE 10
-#define N_NEURONE_CACHEE 16
 #define READ_MAX 10000
 #define WRITE_MAX 10000
 
@@ -80,7 +76,7 @@ reseau_t createNetworkFromFile(int nb_layers, const char* filename);
 reseau_t createNetwork(int nb_layers, int nb_entrees_1st_layer, int* nb_neurones_layer);
 void printLayer(layer_t layer);
 void printNetwork(reseau_t network);
-double produit_scalaire(double* a, double* b, int taille_vect);
+double produitScalaire(double* a, double* b, int taille_vect);
 int maxOutput(double* tab, int taille_tab);
 void feedForward(reseau_t network, unsigned char* data_image);
 void testNetwork(reseau_t network, dataset_t ds);
@@ -93,4 +89,4 @@ void trainNetwork(reseau_t network, dataset_t ds, int nb_images, int nb_images_p
 void saveNetwork(reseau_t network, const char* filename);
 void emptyBuffer(void);
 void printMenu(void);
-void waitSeconds(unsigned int secondes);
+void waitSeconds(time_t secondes);
