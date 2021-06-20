@@ -173,12 +173,12 @@ layer_t createLayer(int nb_neurones, int nb_entrees)
         exit(1);
     }
 
-    layer.neurone->nb = nb_entrees;
+    layer.nb_entree = nb_entrees;
 
     int i;
     for (i = 0; i < nb_neurones; i++)
     {
-        layer.neurone[i].poids = calloc(layer.neurone->nb, sizeof(double));
+        layer.neurone[i].poids = calloc(layer.nb_entree, sizeof(double));
         if (layer.neurone[i].poids == NULL)
         {
             printf("createLayer : Erreur allocation dynamique de mémoire pour le tableau de poids !\n");
@@ -335,12 +335,14 @@ void printNetwork(reseau_t network)
         while (node != network.queue)
         {
             printf("Layer n#%d\n", i);
-            printLayer(node->layer);
+            printf("Ce layer contient %d neurones, %d entrees et %d sorties. \n", node->layer.nb_neurone, node->layer.nb_entree, node->layer.nb_sortie);
+
             node = node->suiv;
             i++;
         }
         printf("Layer n#%d:\n", i);
-        printLayer(network.queue->layer);
+        printf("Ce layer contient %d neurones, %d entrees et %d sorties. \n", node->layer.nb_neurone, node->layer.nb_entree, node->layer.nb_sortie);
+
     }
     printf("\n");
 }

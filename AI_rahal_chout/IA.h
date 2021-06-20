@@ -17,12 +17,11 @@
 // structure pour un neurone
 typedef struct neurone_s
 {
-	int nb;			      // nombre d'entrées
-	double* poids;		// un tableau de poids
-	double biais;		  // une valeur de biais
-	double delta;
-	double delta_biais;
-	double* delta_poids;
+	double* poids;			// un tableau de poids
+	double biais;			// une valeur de biais
+	double delta;			// un tableau de delta
+	double delta_biais;		// un tableau de delta_biais
+	double* delta_poids;	// un tableau de delta_poids
 }neurone_t;
 
 
@@ -32,13 +31,13 @@ typedef struct layer_s
 	neurone_t* neurone;		// un tableau de neurones
 	double* entree;		    // un tableau d'entrée
 	double* sortie;		    // un tableau de sorties
-	int nb_neurone;
-	int nb_entree;
-	int nb_sortie;
+	int nb_neurone;			// le nombre de neurone du layer
+	int nb_entree;			// le nombre d'entree du layer
+	int nb_sortie;			// le nombre de sortie du layer
 }layer_t;
 
 
-// structures pour le reseau / une liste chaînée de layers
+// structures pour le reseau / une liste doublement chaînée de layers
 typedef struct node_layer_s
 {
 	layer_t layer;
